@@ -1,6 +1,7 @@
 verbose = False
 
 months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+valid_characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 def clean_text(text):
     text = str(text)
@@ -31,6 +32,15 @@ def get_month_number(month):
     for i in range(len(months)):
         if month == months[i]:
             return i
+
+def create_table_name(string):
+    table_name = ""
+    for char in string:
+        if char.isalpha() or char in valid_characters:
+            table_name += char
+        if char is ' ':
+            table_name += '_'
+    return "_%s" % table_name
 
 def create_date_from(array):
     # print(array)

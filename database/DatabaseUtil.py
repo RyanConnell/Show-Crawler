@@ -16,8 +16,7 @@ class DatabaseLayout():
 
 class DatabaseData():
 
-    def __init__(self, name, table_name, database_data, database_layout):
-        self.name = name
+    def __init__(self, table_name, database_data, database_layout):
         self.table_name = table_name
         self.database_data = database_data
         self.database_layout = database_layout
@@ -36,6 +35,12 @@ class DatabaseData():
                     database_string = "%d" % data[self.database_layout.masked_vars[i]]
                 else:
                     database_string = "%s, %d" % (database_string, data[self.database_layout.masked_vars[i]])
+            elif data_type is bool:
+                value = 1 if data[self.database_layout.masked_vars[i]] else 0
+                if database_string == "":
+                    database_string = "%d" % value
+                else:
+                    database_string = "%s, %d" % (database_string, value)
             else:
                 print("[ERROR] Was unable to add data of type %s" % data_type)
         return database_string

@@ -23,8 +23,6 @@ class Show(threading.Thread):
     database = None
     database_data = None
 
-    valid_characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-
     def __init__(self, show_id, name, wikipedia_url, working_dir):
         threading.Thread.__init__(self, name=name)
 
@@ -36,26 +34,17 @@ class Show(threading.Thread):
 
         util.verbose_print("%35s Setting up" % ("[%s]" % self.name))
 
-    def create_table_name(self):
-        table_name = ""
-        for char in self.name:
-            if char.isalpha() or char in self.valid_characters:
-                table_name += char
-            if char is ' ':
-                table_name += '_'
-        return "_%s" % table_name
-
     def setup_database(self):
         self.database = Database.SQLiteDatabase("%s/databases/database.db" % self.working_dir)
         self.database.open_database()
-        self.database.create_table(self.create_table_name(), "ID INT, Title TEXT, Season INT, Episode INT, Date TEXT", True)
+        self.database.create_table(util.create_table_name(self.name), "ID INT, Title TEXT, Season INT, Episode INT, Date TEXT", True)
         self.database.close_database()
 
     def run(self):
         self.state = "Running"
         episode_data = self.crawl_wikipedia()
 
-        self.database_data = DatabaseUtil.DatabaseData(self.name, self.create_table_name(), episode_data, database_layout)
+        self.database_data = DatabaseUtil.DatabaseData(util.create_table_name(self.name), episode_data, database_layout)
         util.verbose_print("%35s Finished gathering data" % ("[%s]" % self.name))
 
         self.state = "Finished"

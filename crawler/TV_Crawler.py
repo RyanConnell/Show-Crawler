@@ -7,7 +7,7 @@ from database import SQLiteDatabase as Database
 from database import DatabaseUtil
 from util import util
 
-clean_slate = False
+clean_slate = True
 viewed_links = set()
 links = set()
 name = ""
@@ -29,14 +29,12 @@ def init(project_name):
     # Setup Database
     db = Database.SQLiteDatabase("projects/%s/databases/database.db" % project_name)
     db.open_database()
-    db.create_table("Shows", "ShowID INT, Name TEXT, Wikipedia_URL TEXT, IMDB_URL TEXT, Trailer_URL TEXT", clean_slate)
+    db.create_table("Shows", "ShowID INT, Name TEXT, Wikipedia_URL TEXT, IMDB_URL TEXT, Trailer_URL TEXT, Location TEXT, Finished_Airing INT", clean_slate)
     db.close_database()
 
     if clean_slate:
         create_database_from_file("projects/%s" % project_name)
 
-    # shows = ["Gotham", "Silicon Valley", "Fargo", "Murder in the First", "Stitchers", "The Strain", "Fear the Walking Dead"]
-    # update_shows("projects/%s" % project_name, shows)
     update_shows("projects/%s" % project_name, {})
 
     init_database_tables()
@@ -89,18 +87,25 @@ def spider_check(spider_count, spider_cap, database):
 
 
 def create_database_from_file(working_dir):
-    database_layout = DatabaseUtil.DatabaseLayout("ID, Title, Episode, Season, Date", "episode_id, title, episode, season, date")
+    database_layout = DatabaseUtil.DatabaseLayout("ShowID, Name, Wikipedia_URL, IMDB_URL, Trailer_URL, Location, Finished_Airing", "id, name, wiki, imdb, trailer, location, finished_airing")
     db = Database.SQLiteDatabase("%s/databases/database.db" % working_dir)
-    db.open_database()
     i = 0
     for show in show_list.shows:
+        show_list.shows[show]['id'] = i
+        show_list.shows[show]['name'] = str(show)
+        show_list.shows[show]['location'] = util.create_table_name(show)
         show_list.shows[show]['wiki'] = "http://en.wikipedia.org/wiki/%s" % show_list.shows[show]['wiki']
         show_list.shows[show]['imdb'] = "http://www.imdb.com/title/%s" % show_list.shows[show]['imdb']
         show_list.shows[show]['trailer'] = "http://www.youtube.com/watch?v=%s" % show_list.shows[show]['trailer']
-        db.write_to_table("Shows", "ShowID, Name, Wikipedia_URL, IMDB_URL, Trailer_URL", "%d, \"%s\", \"%s\", \"%s\", \"%s\"" % (i, show, show_list.shows[show]['wiki'], show_list.shows[show]['imdb'], show_list.shows[show]['trailer']))
+
+        # THIS SHOULD BE MODIFIED LATER TO BETTER REFLECT THE BACKUP SHOW LIST
+        show_list.shows[show]['finished_airing'] = False
+        if 'airing' in show_list.shows[show]:
+            show_list.shows[show]['finished_airing'] = not show_list.shows[show]['airing']
+
+        database_data = DatabaseUtil.DatabaseData("Shows", [show_list.shows[show]], database_layout)
+        database_data.write_to_database(db)
         i += 1
-    db.commit()
-    db.close_database()
 
 
 def backup_database_to_file():
